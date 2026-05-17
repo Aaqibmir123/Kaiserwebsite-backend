@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-const frontendOrigin = process.env.FRONTEND_ORIGIN ?? "http://localhost:3000";
+const frontendOrigin = process.env.CORS_ORIGIN ?? process.env.FRONTEND_ORIGIN ?? "http://localhost:3000";
 
 export function corsHeaders() {
   return {

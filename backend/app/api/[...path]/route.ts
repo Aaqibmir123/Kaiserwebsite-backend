@@ -38,7 +38,7 @@ function getPath(parts: string[]) {
   return parts.join("/");
 }
 
-function zodMessage(error: { issues: Array<{ path: Array<string | number>; message: string }> }) {
+function zodMessage(error: { issues: Array<{ path: Array<PropertyKey>; message: string }> }) {
   const issue = error.issues[0];
   if (!issue) return "Invalid payload";
   const field = issue.path[0];

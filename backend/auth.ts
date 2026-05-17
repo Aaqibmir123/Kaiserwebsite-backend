@@ -54,12 +54,29 @@ function readConfiguredList(key: string) {
     .filter(Boolean);
 }
 
-const adminEmail = readConfiguredValue("ADMIN_EMAIL", site.email);
-const adminPhone = readConfiguredValue("ADMIN_PHONE", "7889893844");
-const adminPhoneAliases = [];
+const adminEmail = readConfiguredValue("ADMIN_LOGIN_EMAIL", readConfiguredValue("ADMIN_EMAIL", site.email));
+const adminPhone = readConfiguredValue("ADMIN_LOGIN_PHONE", readConfiguredValue("ADMIN_PHONE", "7889893844"));
+const adminPhoneAliases: string[] = [];
 
-function secretKey() {
-  return new TextEncoder().encode(readConfiguredValue("JWT_SECRET", "kasierwebsitee-secret-change-me"));
+function accessSecretKey() {
+  return new TextEncoder().encode(
+    readConfiguredValue(
+      "JWT_SECRET",
+      readConfiguredValue("JWT_ACCESS_SECRET", "kasierwebsitee-secret-change-me"),
+    ),
+  );
+}
+
+function refreshSecretKey() {
+  return new TextEncoder().encode(
+    readConfiguredValue(
+      "JWT_SECRET",
+      readConfiguredValue(
+        "JWT_REFRESH_SECRET",
+        readConfiguredValue("JWT_ACCESS_SECRET", "kasierwebsitee-secret-change-me"),
+      ),
+    ),
+  );
 }
 
 function normalizeIdentifier(value: string) {
@@ -100,7 +117,7 @@ export async function createAdminAccessToken(user: AdminAuthUser) {
     .setAudience(audience)
     .setIssuedAt()
     .setExpirationTime(`${accessMaxAge}s`)
-    .sign(secretKey());
+    .sign(accessSecretKey());
 }
 
 export async function createAdminRefreshToken(user: AdminAuthUser) {
@@ -111,7 +128,7 @@ export async function createAdminRefreshToken(user: AdminAuthUser) {
     .setAudience(audience)
     .setIssuedAt()
     .setExpirationTime(`${refreshMaxAge}s`)
-    .sign(secretKey());
+    .sign(refreshSecretKey());
 }
 
 export async function createAdminSession(user: AdminAuthUser) {
@@ -124,7 +141,7 @@ export async function createAdminSession(user: AdminAuthUser) {
 }
 
 export async function verifyAdminAccessToken(token: string) {
-  const { payload } = await jwtVerify(token, secretKey(), {
+  const { payload } = await jwtVerify(token, accessSecretKey(), {
     issuer,
     audience,
   });
@@ -137,7 +154,7 @@ export async function verifyAdminAccessToken(token: string) {
 }
 
 export async function verifyAdminRefreshToken(token: string) {
-  const { payload } = await jwtVerify(token, secretKey(), {
+  const { payload } = await jwtVerify(token, refreshSecretKey(), {
     issuer,
     audience,
   });
@@ -156,11 +173,27 @@ export async function verifyAdminCredentials(identifier: string, password: strin
     return null;
   }
 
-  if (!process.env.ADMIN_PASSWORD_HASH) {
+  const plainPassword =
+    readConfiguredValue("ADMIN_LOGIN_PASSWORD", readLocalEnvValue("ADMIN_LOGIN_PASSWORD") ?? "") ||
+    readConfiguredValue("ADMIN_PASSWORD", "");
+
+  if (plainPassword) {
+    if (password !== plainPassword) {
+      return null;
+    }
+    return {
+      id: "admin",
+      email: adminEmail,
+      name: site.ownerName,
+    } satisfies AdminAuthUser;
+  }
+
+  const hash = passwordHash();
+  if (!hash) {
     return null;
   }
 
-  const isPasswordValid = await bcrypt.compare(password, passwordHash());
+  const isPasswordValid = await bcrypt.compare(password, hash);
   if (!isPasswordValid) {
     return null;
   }
