@@ -76,7 +76,7 @@ async function handleAuth(request: NextRequest, path: string[]) {
     });
     response.cookies.set("kasier-admin-refresh", session.refreshToken, {
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       secure: process.env.NODE_ENV === "production",
       path: "/",
       maxAge: 60 * 60 * 24 * 30,

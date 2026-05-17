@@ -264,7 +264,7 @@ export async function getAdminSessionFromCookies() {
 export function getAdminCookieOptions(maxAge: number) {
   return {
     httpOnly: true,
-    sameSite: "lax" as const,
+    sameSite: (process.env.NODE_ENV === "production" ? "none" : "lax") as "none" | "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge,
