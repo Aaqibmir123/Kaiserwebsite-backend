@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
@@ -64,7 +64,7 @@ enum SupportThreadStatus {
 }
 
 model User {
-  id          String   @id @default(cuid())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   name        String?
@@ -89,9 +89,9 @@ model User {
 }
 
 model OtpCode {
-  id         String      @id @default(cuid())
+  id         String      @id @default(auto()) @map("_id") @db.ObjectId
   createdAt  DateTime    @default(now())
-  userId     String?
+  userId     String?     @db.ObjectId
   user       User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   phone      String
   codeHash   String
@@ -102,7 +102,7 @@ model OtpCode {
 }
 
 model Category {
-  id         String    @id @default(cuid())
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
   slug       String    @unique
   name       String
   icon       String
@@ -113,10 +113,10 @@ model Category {
 }
 
 model SellerStore {
-  id          String             @id @default(cuid())
+  id          String             @id @default(auto()) @map("_id") @db.ObjectId
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
-  ownerId     String             @unique
+  ownerId     String             @unique @db.ObjectId
   owner       User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   name        String
   slug        String             @unique
@@ -136,10 +136,10 @@ model SellerStore {
 }
 
 model SellerApplication {
-  id          String      @id @default(cuid())
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
-  userId      String
+  userId      String      @db.ObjectId
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   storeName   String
   category    String
@@ -156,7 +156,7 @@ model SellerApplication {
 }
 
 model Product {
-  id           String        @id @default(cuid())
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   slug         String        @unique
@@ -171,11 +171,11 @@ model Product {
   status       ProductStatus @default(ACTIVE)
   imageUrl     String
   brand        String?
-  categoryId   String
+  categoryId   String        @db.ObjectId
   category     Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  storeId      String?
+  storeId      String?       @db.ObjectId
   store        SellerStore?  @relation(fields: [storeId], references: [id], onDelete: SetNull)
-  creatorId    String?
+  creatorId    String?       @db.ObjectId
   creator      User?         @relation(fields: [creatorId], references: [id], onDelete: SetNull)
 
   cartItems    CartItem[]
@@ -184,7 +184,7 @@ model Product {
 }
 
 model Testimonial {
-  id             String   @id @default(cuid())
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   clientName     String
@@ -198,23 +198,23 @@ model Testimonial {
 }
 
 model Favorite {
-  id         String   @id @default(cuid())
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt  DateTime @default(now())
-  userId     String
+  userId     String   @db.ObjectId
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  productId  String
+  productId  String   @db.ObjectId
   product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
 }
 
 model CartItem {
-  id            String   @id @default(cuid())
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  userId        String
+  userId        String   @db.ObjectId
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  productId     String
+  productId     String   @db.ObjectId
   product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   quantity      Int      @default(1)
   selectedSize  String?
@@ -224,10 +224,10 @@ model CartItem {
 }
 
 model Address {
-  id          String   @id @default(cuid())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  userId      String
+  userId      String   @db.ObjectId
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   label       String
   name        String
@@ -242,11 +242,11 @@ model Address {
 }
 
 model Order {
-  id             String      @id @default(cuid())
+  id             String      @id @default(auto()) @map("_id") @db.ObjectId
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
   number        String      @unique
-  userId        String
+  userId        String      @db.ObjectId
   user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   status        OrderStatus @default(PLACED)
   paymentMethod String
@@ -271,9 +271,9 @@ model Order {
 }
 
 model OrderStatusEvent {
-  id          String      @id @default(cuid())
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
   createdAt   DateTime    @default(now())
-  orderId     String
+  orderId     String      @db.ObjectId
   order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
   status      OrderStatus
   note        String?
@@ -284,11 +284,11 @@ model OrderStatusEvent {
 }
 
 model OrderItem {
-  id            String   @id @default(cuid())
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt     DateTime @default(now())
-  orderId       String
+  orderId       String   @db.ObjectId
   order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId     String
+  productId     String   @db.ObjectId
   product       Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
   titleSnapshot String
   priceSnapshot Int
@@ -299,12 +299,12 @@ model OrderItem {
 }
 
 model ReturnRequest {
-  id                 String               @id @default(cuid())
+  id                 String               @id @default(auto()) @map("_id") @db.ObjectId
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
-  orderId            String
+  orderId            String               @db.ObjectId
   order              Order                @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  userId             String
+  userId             String               @db.ObjectId
   user               User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   orderItemId        String?
   orderNumberSnapshot String
@@ -328,15 +328,15 @@ model ReturnRequest {
 }
 
 model SupportThread {
-  id              String              @id @default(cuid())
+  id              String              @id @default(auto()) @map("_id") @db.ObjectId
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
   lastMessageAt   DateTime            @default(now())
   subject         String
   status          SupportThreadStatus @default(OPEN)
-  userId          String
+  userId          String              @db.ObjectId
   user            User                @relation("SupportUser", fields: [userId], references: [id], onDelete: Cascade)
-  assignedAdminId String?
+  assignedAdminId String?             @db.ObjectId
   assignedAdmin   User?               @relation("SupportAssignedAdmin", fields: [assignedAdminId], references: [id], onDelete: SetNull)
   messages        SupportMessage[]
 
@@ -345,12 +345,12 @@ model SupportThread {
 }
 
 model SupportMessage {
-  id          String      @id @default(cuid())
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
-  threadId    String
+  threadId    String      @db.ObjectId
   thread      SupportThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  senderId    String?
+  senderId    String?     @db.ObjectId
   sender      User?       @relation("SupportSender", fields: [senderId], references: [id], onDelete: SetNull)
   senderRole  UserRole
   senderName  String
