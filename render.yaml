@@ -4,10 +4,9 @@ services:
     env: node
     plan: free
     rootDir: .
-    buildCommand: npm ci && npm run prisma:generate && npm run build
-    startCommand: npm run start
-    healthCheckPath: /health
-    autoDeploy: true
+    buildCommand: npm ci && npm run build:backend
+    startCommand: npm run start:backend
+    healthCheckPath: /
     envVars:
       - key: DATABASE_URL
         sync: false
